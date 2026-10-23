@@ -1,0 +1,1896 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f1eb">
+  <title>Etiquetador de producto | P.E.P.S.</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      color: #21231f;
+      background: #f4f1eb;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      --page: #f4f1eb;
+      --surface: #fff;
+      --ink: #252720;
+      --muted: #73766f;
+      --accent: #395b43;
+      --line: #deded6;
+      --input-border: #d8dad2;
+      --secondary-ink: #454941;
+      --status-bg: #f3f5f1;
+      --status-ink: #566052;
+      --error-bg: #fff1ee;
+      --error-ink: #943e30;
+      --shadow: 0 8px 30px rgb(31 35 28 / 4%);
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      background: #151916;
+      --page: #151916;
+      --surface: #202621;
+      --ink: #eef1eb;
+      --muted: #a8b1a7;
+      --accent: #83a98a;
+      --line: #39443b;
+      --input-border: #4a554b;
+      --secondary-ink: #e1e7df;
+      --status-bg: #29332b;
+      --status-ink: #c5d7c5;
+      --error-bg: #422a27;
+      --error-ink: #ffc1b3;
+      --shadow: 0 8px 30px rgb(0 0 0 / 14%);
+    }
+
+    * { box-sizing: border-box; }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      clip-path: inset(50%);
+    }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      transition: background-color .2s ease, color .2s ease;
+    }
+
+    .app-shell {
+      width: min(1160px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 38px 0 56px;
+    }
+
+    .auth-shell {
+      width: min(480px, calc(100% - 32px));
+      margin: min(12vh, 100px) auto;
+    }
+
+    .auth-panel h1 { font-size: 30px; }
+
+    .auth-status,
+    .profile-status {
+      min-height: 20px;
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .auth-status[data-kind="error"],
+    .profile-status[data-kind="error"] { color: var(--error-ink); }
+
+    .account-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin: -2px 0 24px;
+      padding: 13px 15px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+    }
+
+    .account-identity { min-width: 0; }
+    .account-name { display: block; font-size: 14px; font-weight: 700; }
+    .account-username { display: block; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; }
+    .account-details { min-width: 0; }
+
+    .account-actions {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .profile-editor {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .profile-editor input {
+      width: 155px;
+      min-height: 36px;
+      padding: 7px 9px;
+      font-size: 12px;
+    }
+
+    .profile-editor button,
+    .account-actions > button {
+      min-height: 36px;
+      padding: 7px 10px;
+      font-size: 12px;
+    }
+
+    .topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .topline-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .topline-title::before {
+      width: 24px;
+      height: 2px;
+      background: currentColor;
+      content: "";
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 8px 12px;
+      border-color: var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 12px;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .theme-toggle:hover { border-color: var(--accent); }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 43px);
+      font-weight: 680;
+      letter-spacing: -.045em;
+    }
+
+    .intro {
+      max-width: 650px;
+      margin: 12px 0 30px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .mode-switch {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 20px;
+    }
+
+    .view-switch { margin-bottom: 16px; }
+
+    .mode-button {
+      border-color: var(--line);
+      background: var(--surface);
+      color: var(--secondary-ink);
+    }
+
+    .mode-button[aria-pressed="true"] {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(280px, 370px) minmax(0, 1fr);
+      align-items: start;
+      gap: 24px;
+    }
+
+    .panel {
+      padding: 23px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      transition: background-color .2s ease, border-color .2s ease;
+    }
+
+    .panel h2 {
+      margin: 0 0 7px;
+      font-size: 18px;
+      letter-spacing: -.02em;
+    }
+
+    .panel-hint {
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .field { margin-top: 17px; }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    input {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 12px;
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      outline: none;
+      background: var(--surface);
+      color: var(--ink);
+      font: inherit;
+      font-size: 14px;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+
+    .field-note {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .search-box { position: relative; }
+
+    #product { padding-right: 42px; }
+
+    .search-icon {
+      position: absolute;
+      top: 50%;
+      right: 14px;
+      color: var(--muted);
+      font-size: 18px;
+      pointer-events: none;
+      transform: translateY(-50%);
+    }
+
+    .search-results {
+      position: absolute;
+      z-index: 5;
+      top: calc(100% + 7px);
+      right: 0;
+      left: 0;
+      max-height: 285px;
+      overflow: auto;
+      padding: 5px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+      box-shadow: 0 12px 30px rgb(0 0 0 / 14%);
+    }
+
+    .search-results[hidden] { display: none; }
+
+    .search-option {
+      display: flex;
+      width: 100%;
+      min-height: 48px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 10px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--ink);
+      text-align: left;
+    }
+
+    .search-option:hover,
+    .search-option[aria-selected="true"] {
+      background: var(--status-bg);
+    }
+
+    .option-name {
+      min-width: 0;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+
+    .option-detail {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 10px;
+      text-align: right;
+    }
+
+    .search-empty {
+      margin: 0;
+      padding: 12px 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .status {
+      min-height: 40px;
+      margin-top: 16px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: var(--status-bg);
+      color: var(--status-ink);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .status[data-kind="error"] {
+      background: var(--error-bg);
+      color: var(--error-ink);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 20px;
+    }
+
+    button {
+      min-height: 42px;
+      padding: 10px 15px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    button:focus-visible {
+      outline: 3px solid rgb(57 91 67 / 25%);
+      outline-offset: 2px;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .primary:hover { background: #2c4935; }
+
+    .secondary {
+      border-color: var(--line);
+      background: var(--surface);
+      color: var(--secondary-ink);
+    }
+
+    .preview-panel { min-width: 0; }
+
+    .history-panel { margin-top: 8px; }
+
+    .history-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .history-heading h2 { margin: 0 0 6px; }
+    .history-heading p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+    .history-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .history-entry {
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--page);
+    }
+
+    .history-entry-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .history-entry-product { font-size: 15px; font-weight: 700; }
+    .history-entry-meta { color: var(--muted); font-size: 12px; }
+
+    .history-entry-fields {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px 16px;
+      margin: 10px 0 0;
+      color: var(--secondary-ink);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .history-entry-fields strong { color: var(--muted); font-weight: 600; }
+    .history-state { margin-top: 0; }
+
+    .invite-form {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+      align-items: end;
+      gap: 12px;
+    }
+
+    .invite-form .field { margin-top: 0; }
+    .invite-form .actions { margin-top: 0; }
+    .invite-status { margin-top: 15px; }
+
+    @media (max-width: 760px) {
+      .invite-form { grid-template-columns: 1fr; }
+    }
+
+    .preview-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 14px;
+      margin: 1px 1px 14px;
+    }
+
+    .preview-heading h2 {
+      margin: 0;
+      font-size: 17px;
+    }
+
+    .preview-heading span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .label {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1280 / 674;
+      overflow: hidden;
+      border-radius: 3.7%;
+      background: #c9c7bd;
+      color: #161714;
+      font-family: Arial, Helvetica, sans-serif;
+      container-type: inline-size;
+    }
+
+    .incoming-label {
+      background: #e8e9e2;
+      color: #20241f;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    .incoming-topline {
+      position: absolute;
+      top: 10%;
+      left: 7%;
+      color: #395b43;
+      font-size: 1.45cqw;
+      font-weight: 750;
+      letter-spacing: .13em;
+    }
+
+    .incoming-heading {
+      position: absolute;
+      top: 15%;
+      left: 7%;
+      font-size: 3.3cqw;
+      font-weight: 720;
+      letter-spacing: -.04em;
+    }
+
+    .incoming-product {
+      position: absolute;
+      top: 31%;
+      left: 7%;
+      width: 86%;
+      min-height: 15%;
+      padding: 1.3% 1.7%;
+      border-bottom: .22cqw solid #454d43;
+    }
+
+    .incoming-product .incoming-caption,
+    .incoming-field .incoming-caption {
+      display: block;
+      margin-bottom: .7%;
+      color: #545d52;
+      font-size: 1.55cqw;
+      font-weight: 700;
+      letter-spacing: .06em;
+    }
+
+    .incoming-product .incoming-value {
+      display: block;
+      overflow: hidden;
+      font-size: 3cqw;
+      font-weight: 620;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .incoming-grid {
+      position: absolute;
+      top: 51%;
+      left: 7%;
+      display: grid;
+      width: 86%;
+      grid-template-columns: 1fr 1fr;
+      gap: 4% 8%;
+    }
+
+    .incoming-field {
+      min-width: 0;
+      min-height: 8cqw;
+      padding: 0 1.7% 1.1%;
+      border-bottom: .18cqw solid #454d43;
+    }
+
+    .incoming-field .incoming-value {
+      display: block;
+      overflow: hidden;
+      font-size: 2.1cqw;
+      font-weight: 560;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .incoming-footer {
+      position: absolute;
+      right: 7%;
+      bottom: 7%;
+      color: #545d52;
+      font-size: 1.35cqw;
+      letter-spacing: .08em;
+    }
+
+    .label-heading {
+      position: absolute;
+      top: 5.2%;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 2.45cqw;
+      font-weight: 400;
+    }
+
+    .brand-mark {
+      position: absolute;
+      top: 4.2%;
+      right: 5.2%;
+      display: grid;
+      width: 8.5%;
+      aspect-ratio: 1;
+      place-items: center;
+      border: .24cqw solid #343630;
+      border-radius: 50%;
+      color: #343630;
+      font-size: 1.25cqw;
+      font-weight: 750;
+      line-height: 1;
+      text-align: center;
+    }
+
+    .write-row {
+      position: absolute;
+      left: 4.3%;
+      display: grid;
+      width: 75%;
+      grid-template-columns: 26% minmax(0, 1fr);
+      align-items: end;
+      gap: 1.2%;
+      font-size: 2.25cqw;
+    }
+
+    .product-row { top: 22.8%; }
+    .made-by-row { top: 30.3%; }
+
+    .write-row .caption {
+      padding-bottom: .25%;
+      white-space: nowrap;
+    }
+
+    .write-row .write-in {
+      min-width: 0;
+      min-height: 1.6em;
+      overflow: hidden;
+      border-bottom: .16cqw solid #191a17;
+      padding: 0 1.1% .04em;
+      font-size: .82em;
+      line-height: 1.35;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .date-headings {
+      position: absolute;
+      top: 49.5%;
+      left: 25%;
+      display: grid;
+      width: 54%;
+      grid-template-columns: 1fr 1fr;
+      gap: 7%;
+      font-size: 2.25cqw;
+      text-align: center;
+    }
+
+    .date-headings span {
+      border-bottom: .16cqw solid #191a17;
+      padding-bottom: .13em;
+    }
+
+    .dates-row {
+      position: absolute;
+      left: 4.3%;
+      display: grid;
+      width: 75%;
+      grid-template-columns: 26% 1fr 1fr;
+      align-items: end;
+      gap: 1.2% 2.2%;
+      font-size: 2.25cqw;
+    }
+
+    .made-row { top: 57%; }
+    .ready-row { top: 68%; }
+    .discard-row { top: 79%; }
+
+    .dates-row .date-value,
+    .dates-row .time-value {
+      min-width: 0;
+      min-height: 1.6em;
+      overflow: hidden;
+      border-bottom: .16cqw solid #191a17;
+      padding: 0 1% .04em;
+      font-size: .73em;
+      line-height: 1.4;
+      text-align: center;
+      text-overflow: clip;
+      white-space: nowrap;
+    }
+
+    .disclaimer {
+      margin: 13px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 760px) {
+      .app-shell {
+        width: min(100% - 28px, 560px);
+        padding-top: 27px;
+      }
+
+      .workspace { grid-template-columns: 1fr; }
+      .panel { padding: 19px; }
+      .preview-panel { padding: 17px; }
+      .preview-heading span { text-align: right; }
+      .account-bar { align-items: flex-start; flex-direction: column; }
+      .account-actions { width: 100%; justify-content: space-between; }
+      .profile-editor { flex: 1; }
+      .profile-editor input { width: 100%; }
+    }
+
+    @media print {
+      @page { size: landscape; margin: 0; }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background: #fff;
+      }
+
+      .app-shell, .workspace, .preview-panel {
+        display: block;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .topline, h1, .intro, .account-bar, .mode-switch, .view-switch, .auth-shell, .form-panel, .history-panel, .preview-heading, .disclaimer {
+        display: none !important;
+      }
+
+      .label {
+        display: none !important;
+        width: min(100vw, 190vh);
+        max-height: 100vh;
+        margin: auto;
+        border-radius: 3.7%;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .label.is-printing {
+        display: block !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="auth-shell" id="auth-shell" aria-labelledby="auth-title">
+    <div class="panel auth-panel">
+      <div class="topline-title">Herramienta P.E.P.S.</div>
+      <h1 id="auth-title">Acceso del equipo</h1>
+      <p class="panel-hint">Inicia sesión con tu usuario y contraseña asignados por la persona administradora.</p>
+      <form id="login-form">
+        <div class="field">
+          <label for="login-username">Usuario</label>
+          <input id="login-username" name="username" type="text" maxlength="32" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,31}" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+        </div>
+        <div class="field">
+          <label for="login-password">Contraseña</label>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <div class="actions">
+          <button class="primary" id="login-button" type="submit">Iniciar sesión</button>
+          <button class="secondary" id="auth-sign-out-button" type="button" hidden>Cerrar sesión</button>
+        </div>
+      </form>
+      <p class="auth-status" id="auth-status" role="status" aria-live="polite">Comprueba la configuración de acceso.</p>
+    </div>
+  </section>
+
+  <main class="app-shell" id="app-shell" hidden>
+    <div class="topline">
+      <span class="topline-title">Herramienta P.E.P.S.</span>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">
+        <span id="theme-icon" aria-hidden="true">☾</span>
+        <span id="theme-label">Modo oscuro</span>
+      </button>
+    </div>
+    <div class="account-bar">
+      <div class="account-details">
+        <div class="account-identity">
+          <span class="account-name" id="account-name"></span>
+          <span class="account-username" id="account-username"></span>
+        </div>
+        <p class="profile-status" id="profile-status" role="status" aria-live="polite"></p>
+      </div>
+      <div class="account-actions">
+        <form class="profile-editor" id="profile-form">
+          <label for="profile-name" class="sr-only">Nombre visible</label>
+          <input id="profile-name" name="display-name" type="text" maxlength="80" placeholder="Nombre visible" required>
+          <button class="secondary" type="submit">Guardar nombre</button>
+        </form>
+        <button class="secondary" id="sign-out-button" type="button">Salir</button>
+      </div>
+    </div>
+    <h1>Etiquetador de producto</h1>
+    <p class="intro">Calcula fechas para preparar productos o registra los datos de ingreso a la tienda; elige el tipo de etiqueta que necesitas.</p>
+
+    <div class="mode-switch view-switch" role="group" aria-label="Sección">
+      <button class="mode-button" id="labels-view-button" type="button" aria-pressed="true">Etiquetas</button>
+      <button class="mode-button" id="history-view-button" type="button" aria-pressed="false">Historial</button>
+      <button class="mode-button" id="admin-view-button" type="button" aria-pressed="false" hidden>Usuarios</button>
+    </div>
+
+    <div id="labels-view-panel">
+      <div class="mode-switch" role="group" aria-label="Tipo de etiqueta">
+        <button class="mode-button" id="prep-mode" type="button" aria-pressed="true">Preparación</button>
+        <button class="mode-button" id="incoming-mode" type="button" aria-pressed="false">Ingreso a tienda</button>
+      </div>
+
+      <div class="workspace">
+      <section class="panel form-panel" aria-labelledby="form-title">
+        <h2 id="form-title">Datos de la etiqueta</h2>
+        <p class="panel-hint" id="form-hint">Selecciona el producto y revisa la fecha y hora de elaboración antes de imprimir.</p>
+
+        <div class="field" id="prep-fields">
+          <label for="product">Producto</label>
+          <div class="search-box">
+            <input id="product" name="product" placeholder="Prueba: pollo, queso, mozza…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="product-results" aria-describedby="product-info">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <div class="search-results" id="product-results" role="listbox" aria-label="Productos sugeridos" hidden></div>
+          </div>
+          <p class="field-note" id="product-info">Escribe una palabra, aunque no recuerdes el nombre completo, y elige un resultado.</p>
+        </div>
+
+        <div class="field" id="prep-time-field">
+          <label for="made-at">Hecho — fecha y hora</label>
+          <input id="made-at" name="made-at" type="datetime-local" step="60">
+          <p class="field-note">Se inicia con la fecha y hora actuales; puedes editarlas.</p>
+        </div>
+
+        <div class="field" id="prep-by-field">
+          <label for="made-by">Hecho por <span style="font-weight:400;color:#73766f">(opcional)</span></label>
+          <input id="made-by" name="made-by" type="text" maxlength="50" placeholder="Nombre">
+        </div>
+
+        <div id="incoming-fields" hidden>
+          <div class="field">
+            <label for="incoming-product">Producto</label>
+            <input id="incoming-product" name="incoming-product" type="text" maxlength="70" placeholder="Nombre del producto">
+          </div>
+          <div class="field">
+            <label for="received-at">Fecha y hora de ingreso</label>
+            <input id="received-at" name="received-at" type="datetime-local" step="60" required>
+            <p class="field-note">Se inicia con la fecha y hora actuales; puedes editarlas.</p>
+          </div>
+          <div class="field">
+            <label for="supplier">Proveedor <span style="font-weight:400;color:#73766f">(opcional)</span></label>
+            <input id="supplier" name="supplier" type="text" maxlength="50" placeholder="Nombre del proveedor">
+          </div>
+          <div class="field">
+            <label for="expiry-date">Fecha de caducidad del envase <span style="font-weight:400;color:#73766f">(opcional)</span></label>
+            <input id="expiry-date" name="expiry-date" type="date">
+          </div>
+          <div class="field">
+            <label for="quantity">Cantidad recibida <span style="font-weight:400;color:#73766f">(opcional)</span></label>
+            <input id="quantity" name="quantity" type="text" maxlength="30" placeholder="Ej.: 4 cajas">
+          </div>
+          <div class="field">
+            <label for="received-by">Recibido por <span style="font-weight:400;color:#73766f">(opcional)</span></label>
+            <input id="received-by" name="received-by" type="text" maxlength="50" placeholder="Nombre">
+          </div>
+        </div>
+
+        <div class="status" id="status" role="status" aria-live="polite">Selecciona un producto registrado.</div>
+        <div class="actions">
+          <button class="primary" id="print-button" type="button"><span id="print-button-label">Imprimir etiqueta</span></button>
+          <button class="secondary" id="reset-button" type="button">Limpiar</button>
+        </div>
+      </section>
+
+      <section class="panel preview-panel" aria-labelledby="preview-title">
+        <div class="preview-heading">
+          <h2 id="preview-title">Vista previa · Preparación</h2>
+          <span id="preview-mode-hint">Solo se imprime la etiqueta</span>
+        </div>
+
+        <div class="label" id="label" aria-label="Vista previa de la etiqueta">
+          <div class="label-heading">No olvides usar P.E.P.S.</div>
+          <div class="brand-mark" aria-hidden="true">P.E.P.S.</div>
+
+          <div class="write-row product-row">
+            <span class="caption">PRODUCTO:</span>
+            <span class="write-in" id="label-product"></span>
+          </div>
+          <div class="write-row made-by-row">
+            <span class="caption">HECHO POR:</span>
+            <span class="write-in" id="label-made-by"></span>
+          </div>
+
+          <div class="date-headings" aria-hidden="true">
+            <span>FECHA</span>
+            <span>HORA</span>
+          </div>
+
+          <div class="dates-row made-row">
+            <span>HECHO:</span>
+            <span class="date-value" id="label-made-date"></span>
+            <span class="time-value" id="label-made-time"></span>
+          </div>
+          <div class="dates-row ready-row">
+            <span>LISTO:</span>
+            <span class="date-value" id="label-ready-date"></span>
+            <span class="time-value" id="label-ready-time"></span>
+          </div>
+          <div class="dates-row discard-row">
+            <span>DESCARTE:</span>
+            <span class="date-value" id="label-discard-date"></span>
+            <span class="time-value" id="label-discard-time"></span>
+          </div>
+        </div>
+        <div class="label incoming-label" id="incoming-label" aria-label="Vista previa de etiqueta de ingreso" hidden>
+          <div class="incoming-topline">CONTROL DE INVENTARIO</div>
+          <div class="incoming-heading">INGRESO A TIENDA</div>
+          <div class="incoming-product">
+            <span class="incoming-caption">PRODUCTO</span>
+            <span class="incoming-value" id="incoming-label-product"></span>
+          </div>
+          <div class="incoming-grid">
+            <div class="incoming-field">
+              <span class="incoming-caption">FECHA Y HORA DE INGRESO</span>
+              <span class="incoming-value" id="incoming-label-received-at"></span>
+            </div>
+            <div class="incoming-field">
+              <span class="incoming-caption">PROVEEDOR</span>
+              <span class="incoming-value" id="incoming-label-supplier"></span>
+            </div>
+            <div class="incoming-field">
+              <span class="incoming-caption">CADUCIDAD DEL ENVASE</span>
+              <span class="incoming-value" id="incoming-label-expiry"></span>
+            </div>
+            <div class="incoming-field">
+              <span class="incoming-caption">CANTIDAD RECIBIDA</span>
+              <span class="incoming-value" id="incoming-label-quantity"></span>
+            </div>
+            <div class="incoming-field">
+              <span class="incoming-caption">RECIBIDO POR</span>
+              <span class="incoming-value" id="incoming-label-received-by"></span>
+            </div>
+          </div>
+          <div class="incoming-footer">REVISAR Y ROTAR · P.E.P.S.</div>
+        </div>
+        <p class="disclaimer" id="preview-disclaimer">Los tiempos se transcribieron de forma inicial desde las fotos compartidas. Confirma los datos y las condiciones de almacenamiento con la tabla oficial vigente antes de usar la etiqueta.</p>
+      </section>
+      </div>
+    </div>
+    <section class="panel history-panel" id="history-panel" aria-labelledby="history-title" hidden>
+      <div class="history-heading">
+        <div>
+          <h2 id="history-title">Historial de etiquetas</h2>
+          <p>Registro compartido de solicitudes de impresión. Las entradas no se pueden editar ni borrar desde la aplicación.</p>
+        </div>
+        <button class="secondary" id="refresh-history-button" type="button">Actualizar</button>
+      </div>
+      <div class="status history-state" id="history-status" role="status" aria-live="polite">Abre esta sección para cargar el historial.</div>
+      <div class="history-list" id="history-list"></div>
+    </section>
+    <section class="panel history-panel" id="admin-panel" aria-labelledby="admin-title" hidden>
+      <div class="history-heading">
+        <div>
+          <h2 id="admin-title">Crear cuenta de personal</h2>
+          <p>Crea un usuario individual y comparte la contraseña inicial de forma segura.</p>
+        </div>
+      </div>
+      <form class="invite-form" id="invite-form">
+        <div class="field">
+          <label for="invite-name">Nombre visible</label>
+          <input id="invite-name" name="display-name" type="text" maxlength="80" autocomplete="name" required>
+        </div>
+        <div class="field">
+          <label for="invite-username">Usuario</label>
+          <input id="invite-username" name="username" type="text" minlength="3" maxlength="32" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,31}" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+        </div>
+        <div class="field">
+          <label for="invite-password">Contraseña inicial</label>
+          <input id="invite-password" name="password" type="password" minlength="8" maxlength="72" autocomplete="new-password" required>
+        </div>
+        <div class="actions">
+          <button class="primary" id="invite-button" type="submit">Crear cuenta</button>
+        </div>
+      </form>
+      <div class="status invite-status" id="invite-status" role="status" aria-live="polite">Solo las cuentas administradoras pueden crear usuarios.</div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4"></script>
+  <script src="./config.js"></script>
+  <script>
+    // readyHours representa el descongelado/preparación; useHours, el tiempo indicado en "En uso".
+    // Los valores null indican que la foto no permite confirmar un tiempo de esa columna.
+    const PRODUCTS = [
+      { name: "Aceite de soya", readyHours: 0, useHours: 360 },
+      { name: "Aderezo BBQ", readyHours: 0, useHours: 120 },
+      { name: "Aderezo Ranch", readyHours: 0, useHours: 120 },
+      { name: "Alitas de pollo", readyHours: 0, useHours: 120 },
+      { name: "Azúcar glass", readyHours: 0, useHours: 120 },
+      { name: "Boneless", readyHours: 0, useHours: 120 },
+      { name: "Cajeta", readyHours: 0, useHours: 120 },
+      { name: "Carne de res", readyHours: 72, useHours: 48 },
+      { name: "Carne de cerdo", readyHours: 72, useHours: 48 },
+      { name: "Catsup en sobre", readyHours: 0, useHours: null },
+      { name: "Cebolla morada en julianas", readyHours: 0, useHours: 12 },
+      { name: "Champiñón", readyHours: 0, useHours: 48 },
+      { name: "Champiñón en lata", readyHours: 0, useHours: 12 },
+      { name: "Chips jalapeño", readyHours: 0, useHours: 24 },
+      { name: "Chile guajillo en sobres", readyHours: 0, useHours: 120 },
+      { name: "Chile jalapeño en rodaja", readyHours: 0, useHours: 12 },
+      { name: "Chorizo topping", readyHours: 0, useHours: 12 },
+      { name: "Crema de avellana", readyHours: 0, useHours: 120 },
+      { name: "Doralight ajo", readyHours: 0, useHours: 360 },
+      { name: "Doralight natural", readyHours: 0, useHours: 360 },
+      { name: "Harina", readyHours: 0, useHours: null },
+      { name: "Jamón congelado", readyHours: 24, useHours: 24 },
+      { name: "Lechera", readyHours: 0, useHours: 120 },
+      { name: "Levadura YBG GG", readyHours: 0, useHours: null },
+      { name: "Masa congelada Crisp RTU", readyHours: 8, useHours: 40 },
+      { name: "Masa congelada Gran Hut RTU", readyHours: 24, useHours: 24 },
+      { name: "Masa congelada Pan RTU", readyHours: 24, useHours: 24 },
+      { name: "Masa congelada Pan (Hutchesco) RTU", readyHours: 15, useHours: 36 },
+      { name: "Masa congelada Rectangular RTU", readyHours: 24, useHours: 24 },
+      { name: "Masa congelada Tradicional RTU", readyHours: 24, useHours: 24 },
+      { name: "Mezcla de vegetales", readyHours: 0, useHours: 24 },
+      { name: "Mix de carnes", readyHours: 0, useHours: 24 },
+      { name: "Munchers / Quepapas", readyHours: 0, useHours: 24 },
+      { name: "Papa Colosal Crisp 3/8", readyHours: 0, useHours: null },
+      { name: "Papa Gajo Pizza Hut C27", readyHours: 0, useHours: null },
+      { name: "Pasta de tomate", readyHours: 0, useHours: 72 },
+      { name: "Pepperoni", readyHours: 72, useHours: 48 },
+      { name: "Pica Hut en sobre", readyHours: 0, useHours: null },
+      { name: "Piña en trozos", readyHours: 0, useHours: 48 },
+      { name: "Pimiento verde precortado en juliana", readyHours: 0, useHours: 12 },
+      { name: "Queso cheddar rallado", readyHours: 0, useHours: 48 },
+      { name: "Queso cheddar en sobre", readyHours: 0, useHours: null },
+      { name: "Queso Fonterra", readyHours: 72, useHours: null },
+      { name: "Queso mozzarella Best Ever", readyHours: 96, useHours: 48 },
+      { name: "Queso mozzarella cúbico esmeralda", readyHours: 72, useHours: 48 },
+      { name: "Salchicha italiana", readyHours: 72, useHours: 48 },
+      { name: "Salsa alitas PH", readyHours: 0, useHours: 72 },
+      { name: "Salsa BBQ", readyHours: 0, useHours: null },
+      { name: "Salsa Buffalo Wings PH", readyHours: 0, useHours: 120 },
+      { name: "Salsa Mango Habanero", readyHours: 0, useHours: 120 },
+      { name: "Salsa para pizza", readyHours: 0, useHours: 120 },
+      { name: "Salsa Ranch PH en blister", readyHours: 0, useHours: null },
+      { name: "Sazonador Adobado", readyHours: 0, useHours: 48 },
+      { name: "String Cheese", readyHours: 72, useHours: null },
+      { name: "Tender de pollo empanizado", readyHours: 0, useHours: 120 },
+      { name: "Tocino topping", readyHours: 24, useHours: 24 },
+      { name: "HutDust", readyHours: 0, useHours: 168 }
+    ].sort((a, b) => a.name.localeCompare(b.name, "es"));
+
+    const supabaseConfig = window.SUPABASE_CONFIG || {};
+    const supabase = supabaseConfig.url && supabaseConfig.anonKey && window.supabase
+      ? window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey)
+      : null;
+    const authShell = document.getElementById("auth-shell");
+    const appShell = document.getElementById("app-shell");
+    const authStatus = document.getElementById("auth-status");
+    const loginButton = document.getElementById("login-button");
+    const profileNameInput = document.getElementById("profile-name");
+    const profileStatus = document.getElementById("profile-status");
+    const historyStatus = document.getElementById("history-status");
+    const historyList = document.getElementById("history-list");
+    const inviteStatus = document.getElementById("invite-status");
+    const inviteButton = document.getElementById("invite-button");
+    let activeUser = null;
+    let activeProfile = null;
+    let sessionVersion = 0;
+
+    const productInput = document.getElementById("product");
+    const madeAtInput = document.getElementById("made-at");
+    const madeByInput = document.getElementById("made-by");
+    const statusElement = document.getElementById("status");
+    const productInfo = document.getElementById("product-info");
+    const resultsElement = document.getElementById("product-results");
+    const incomingInputs = {
+      product: document.getElementById("incoming-product"),
+      receivedAt: document.getElementById("received-at"),
+      supplier: document.getElementById("supplier"),
+      expiryDate: document.getElementById("expiry-date"),
+      quantity: document.getElementById("quantity"),
+      receivedBy: document.getElementById("received-by")
+    };
+    const incomingLabelFields = {
+      product: document.getElementById("incoming-label-product"),
+      receivedAt: document.getElementById("incoming-label-received-at"),
+      supplier: document.getElementById("incoming-label-supplier"),
+      expiry: document.getElementById("incoming-label-expiry"),
+      quantity: document.getElementById("incoming-label-quantity"),
+      receivedBy: document.getElementById("incoming-label-received-by")
+    };
+    const labelFields = {
+      product: document.getElementById("label-product"),
+      madeBy: document.getElementById("label-made-by"),
+      madeDate: document.getElementById("label-made-date"),
+      madeTime: document.getElementById("label-made-time"),
+      readyDate: document.getElementById("label-ready-date"),
+      readyTime: document.getElementById("label-ready-time"),
+      discardDate: document.getElementById("label-discard-date"),
+      discardTime: document.getElementById("label-discard-time")
+    };
+
+    function setMessage(element, message, kind = "info") {
+      element.textContent = message;
+      element.dataset.kind = kind;
+    }
+
+    async function syncSession(session) {
+      const version = ++sessionVersion;
+      activeUser = session?.user || null;
+
+      if (!activeUser) {
+        appShell.hidden = true;
+        authShell.hidden = false;
+        activeProfile = null;
+        document.getElementById("auth-sign-out-button").hidden = true;
+        document.getElementById("login-password").value = "";
+        setMessage(authStatus, "Inicia sesión con tu usuario y contraseña asignados por la persona administradora.");
+        return;
+      }
+
+      let data;
+      let error;
+      try {
+        ({ data, error } = await supabase
+          .from("profiles")
+          .select("id, display_name, username, role")
+          .eq("id", activeUser.id)
+          .single());
+      } catch (requestError) {
+        if (version !== sessionVersion) return;
+        appShell.hidden = true;
+        authShell.hidden = false;
+        activeProfile = null;
+        document.getElementById("auth-sign-out-button").hidden = false;
+        setMessage(authStatus, "No se pudo conectar con el perfil. Comprueba la conexión e inténtalo de nuevo.", "error");
+        console.error("No se pudo cargar el perfil de usuario.", requestError);
+        return;
+      }
+
+      if (version !== sessionVersion) return;
+      if (error) {
+        appShell.hidden = true;
+        authShell.hidden = false;
+        activeProfile = null;
+        document.getElementById("auth-sign-out-button").hidden = false;
+        setMessage(authStatus, `No se pudo cargar tu perfil. Comprueba la configuración de Supabase: ${error.message}`, "error");
+        return;
+      }
+
+      activeProfile = data;
+      authShell.hidden = true;
+      appShell.hidden = false;
+      document.getElementById("account-name").textContent = data.display_name;
+      document.getElementById("account-username").textContent = `@${data.username}`;
+      profileNameInput.value = data.display_name;
+      const isAdmin = data.role === "admin";
+      document.getElementById("admin-view-button").hidden = !isAdmin;
+      if (!isAdmin && !document.getElementById("admin-panel").hidden) setAppView("labels");
+      if (labelMode === "incoming") renderIncoming();
+      else renderPreparation();
+    }
+
+    async function recordLabelEvent(labelType, product, fields) {
+      if (!supabase || !activeUser) throw new Error("Debes iniciar sesión para guardar esta etiqueta.");
+      const { error } = await supabase.rpc("record_label_event", {
+        p_label_type: labelType,
+        p_product: product,
+        p_fields: fields
+      });
+      if (error) throw error;
+    }
+
+    function appendHistoryField(container, label, value) {
+      const item = document.createElement("span");
+      const title = document.createElement("strong");
+      title.textContent = `${label}: `;
+      item.append(title, document.createTextNode(value));
+      container.append(item);
+    }
+
+    function displayHistoryValue(key, value) {
+      if (typeof value !== "string" || !value) return value == null ? "" : String(value);
+      if (key.endsWith("_at")) {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? value : `${formatDate(date)} · ${formatTime(date)}`;
+      }
+      if (key === "expiry_date") return formatDateInput(value);
+      return value;
+    }
+
+    async function loadHistory() {
+      historyList.replaceChildren();
+      setMessage(historyStatus, "Cargando el historial…");
+      let data;
+      try {
+        const result = await supabase
+          .from("label_events")
+          .select("id, actor_name, label_type, product, fields, created_at")
+          .order("created_at", { ascending: false })
+          .limit(100);
+        if (result.error) throw result.error;
+        data = result.data;
+      } catch (error) {
+        setMessage(historyStatus, `No se pudo cargar el historial: ${error.message}`, "error");
+        console.error("No se pudo cargar el historial de etiquetas.", error);
+        return;
+      }
+
+      if (!Array.isArray(data)) {
+        setMessage(historyStatus, "El historial devolvió una respuesta no válida. Vuelve a intentarlo.", "error");
+        return;
+      }
+
+      if (!data.length) {
+        setMessage(historyStatus, "Todavía no hay etiquetas registradas.");
+        return;
+      }
+
+      setMessage(historyStatus, `Mostrando las ${data.length} solicitudes más recientes (máximo 100).`);
+      for (const event of data) {
+        const article = document.createElement("article");
+        article.className = "history-entry";
+
+        const header = document.createElement("div");
+        header.className = "history-entry-header";
+        const product = document.createElement("span");
+        product.className = "history-entry-product";
+        product.textContent = event.product;
+        const meta = document.createElement("span");
+        meta.className = "history-entry-meta";
+        const createdAt = new Date(event.created_at);
+        const dateText = Number.isNaN(createdAt.getTime())
+          ? event.created_at
+          : `${formatDate(createdAt)} · ${formatTime(createdAt)}`;
+        meta.textContent = `${event.actor_name} · ${event.label_type === "preparation" ? "Preparación" : "Ingreso a tienda"} · Solicitud de impresión: ${dateText}`;
+        header.append(product, meta);
+
+        const fields = document.createElement("div");
+        fields.className = "history-entry-fields";
+        const fieldLabels = event.label_type === "preparation"
+          ? {
+              made_at: "Hecho",
+              ready_at: "Listo",
+              discard_at: "Descarte",
+              made_by: "Hecho por"
+            }
+          : {
+              received_at: "Ingreso",
+              supplier: "Proveedor",
+              expiry_date: "Caducidad del envase",
+              quantity: "Cantidad recibida",
+              received_by: "Recibido por"
+            };
+        for (const [key, label] of Object.entries(fieldLabels)) {
+          const value = displayHistoryValue(key, event.fields?.[key]);
+          if (value) appendHistoryField(fields, label, value);
+        }
+        article.append(header, fields);
+        historyList.append(article);
+      }
+    }
+
+    async function signOut() {
+      if (!supabase) return;
+      try {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+        activeUser = null;
+        activeProfile = null;
+        authShell.hidden = false;
+        appShell.hidden = true;
+        setMessage(authStatus, "Sesión cerrada.");
+      } catch (error) {
+        setMessage(authStatus, `No se pudo cerrar la sesión: ${error.message}`, "error");
+        setMessage(profileStatus, `No se pudo cerrar la sesión: ${error.message}`, "error");
+        console.error("No se pudo cerrar la sesión.", error);
+      }
+    }
+
+    const normalize = (value) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase("es");
+    let searchMatches = [];
+    let activeSuggestionIndex = -1;
+    let labelMode = "prep";
+
+    function editDistance(first, second) {
+      const previous = Array.from({ length: second.length + 1 }, (_, index) => index);
+      for (let row = 1; row <= first.length; row++) {
+        let diagonal = previous[0];
+        previous[0] = row;
+        for (let column = 1; column <= second.length; column++) {
+          const above = previous[column];
+          previous[column] = Math.min(
+            previous[column] + 1,
+            previous[column - 1] + 1,
+            diagonal + (first[row - 1] === second[column - 1] ? 0 : 1)
+          );
+          diagonal = above;
+        }
+      }
+      return previous[second.length];
+    }
+
+    function subsequenceRatio(query, candidate) {
+      let queryIndex = 0;
+      for (const character of candidate) {
+        if (character === query[queryIndex]) queryIndex++;
+        if (queryIndex === query.length) break;
+      }
+      return queryIndex / query.length;
+    }
+
+    function wordScore(query, name, words) {
+      let best = 0;
+      for (const word of words) {
+        if (word === query) best = Math.max(best, 120);
+        else if (word.startsWith(query)) best = Math.max(best, 108 - Math.min(word.length - query.length, 12));
+        else if (word.includes(query)) best = Math.max(best, 94 - word.indexOf(query));
+
+        if (query.length >= 3) {
+          const distance = editDistance(query, word);
+          const allowedDistance = query.length < 6 ? 1 : 2;
+          if (distance <= allowedDistance) best = Math.max(best, 82 - distance * 12);
+
+          const ratio = subsequenceRatio(query, word);
+          if (ratio >= 0.7) best = Math.max(best, 55 + ratio * 20);
+        }
+      }
+      if (name.includes(query)) best = Math.max(best, 88 - name.indexOf(query));
+      return best;
+    }
+
+    function rankedProducts(query) {
+      const words = normalize(query).split(/\s+/).filter(Boolean);
+      if (!words.length) return [];
+
+      return PRODUCTS.map((product) => {
+        const name = normalize(product.name);
+        const nameWords = name.split(/[^a-z0-9]+/).filter(Boolean);
+        const scores = words.map((word) => wordScore(word, name, nameWords));
+        if (scores.some((score) => score === 0)) return null;
+        const exactPhraseBonus = name === words.join(" ") ? 150 : 0;
+        return { product, score: scores.reduce((sum, score) => sum + score, 0) + exactPhraseBonus };
+      })
+        .filter((match) => match !== null)
+        .sort((first, second) => second.score - first.score || first.product.name.localeCompare(second.product.name, "es"))
+        .map((match) => match.product);
+    }
+
+    function productDetail(product) {
+      const ready = product.readyHours === 0 ? "Listo: inmediato" : `Listo: ${product.readyHours} h`;
+      const discard = product.useHours === null ? "Descarte por confirmar" : `Descarte: ${product.useHours} h`;
+      return `${ready} · ${discard}`;
+    }
+
+    function hideSearchResults() {
+      resultsElement.hidden = true;
+      productInput.setAttribute("aria-expanded", "false");
+      productInput.removeAttribute("aria-activedescendant");
+      activeSuggestionIndex = -1;
+    }
+
+    function updateActiveSuggestion() {
+      const options = resultsElement.querySelectorAll('[role="option"]');
+      options.forEach((option, index) => {
+        const isActive = index === activeSuggestionIndex;
+        option.setAttribute("aria-selected", String(isActive));
+        if (isActive) {
+          productInput.setAttribute("aria-activedescendant", option.id);
+          option.scrollIntoView({ block: "nearest" });
+        }
+      });
+      if (activeSuggestionIndex < 0) productInput.removeAttribute("aria-activedescendant");
+    }
+
+    function selectProduct(product) {
+      productInput.value = product.name;
+      hideSearchResults();
+      render();
+    }
+
+    function renderSearchResults() {
+      const query = productInput.value.trim();
+      const exactProduct = PRODUCTS.find((product) => normalize(product.name) === normalize(query));
+      resultsElement.replaceChildren();
+      searchMatches = [];
+
+      if (!query || exactProduct) {
+        hideSearchResults();
+        return;
+      }
+
+      searchMatches = rankedProducts(query);
+      const visibleMatches = searchMatches.slice(0, 7);
+      productInput.setAttribute("aria-expanded", "true");
+      resultsElement.hidden = false;
+
+      if (!searchMatches.length) {
+        const emptyMessage = document.createElement("p");
+        emptyMessage.className = "search-empty";
+        emptyMessage.textContent = "No encontramos coincidencias. Prueba otra palabra, como «pollo», «queso» o «salsa».";
+        resultsElement.append(emptyMessage);
+        return;
+      }
+
+      visibleMatches.forEach((product, index) => {
+        const option = document.createElement("button");
+        option.id = `product-option-${index}`;
+        option.className = "search-option";
+        option.type = "button";
+        option.setAttribute("role", "option");
+        option.setAttribute("aria-selected", "false");
+
+        const name = document.createElement("span");
+        name.className = "option-name";
+        name.textContent = product.name;
+
+        const detail = document.createElement("span");
+        detail.className = "option-detail";
+        detail.textContent = productDetail(product);
+
+        option.append(name, detail);
+        option.addEventListener("click", () => selectProduct(product));
+        resultsElement.append(option);
+      });
+      if (searchMatches.length > visibleMatches.length) {
+        const moreMessage = document.createElement("p");
+        moreMessage.className = "search-empty";
+        moreMessage.textContent = `Mostrando los ${visibleMatches.length} resultados más parecidos. Agrega otra palabra para afinar la búsqueda.`;
+        resultsElement.append(moreMessage);
+      }
+      updateActiveSuggestion();
+    }
+
+    function loadTheme() {
+      try {
+        const savedTheme = localStorage.getItem("peps-theme");
+        return savedTheme === "dark" ? "dark" : "light";
+      } catch (error) {
+        console.warn("No fue posible recuperar la preferencia de tema guardada.", error);
+        return "light";
+      }
+    }
+
+    function applyTheme(theme, save = false) {
+      const isDark = theme === "dark";
+      document.documentElement.dataset.theme = isDark ? "dark" : "light";
+      document.querySelector('meta[name="theme-color"]').content = isDark ? "#151916" : "#f4f1eb";
+      document.getElementById("theme-icon").textContent = isDark ? "☀" : "☾";
+      document.getElementById("theme-label").textContent = isDark ? "Modo claro" : "Modo oscuro";
+      document.getElementById("theme-toggle").setAttribute("aria-pressed", String(isDark));
+
+      if (save) {
+        try {
+          localStorage.setItem("peps-theme", isDark ? "dark" : "light");
+        } catch (error) {
+          console.warn("No fue posible guardar la preferencia de tema.", error);
+        }
+      }
+    }
+
+    function localDateTimeValue(date) {
+      const offset = date.getTimezoneOffset() * 60000;
+      return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+    }
+
+    function formatDate(date) {
+      return new Intl.DateTimeFormat("es-MX", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      }).format(date);
+    }
+
+    function formatTime(date) {
+      return new Intl.DateTimeFormat("es-MX", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23"
+      }).format(date);
+    }
+
+    function formatDateInput(value) {
+      if (!value) return "";
+      const [year, month, day] = value.split("-").map(Number);
+      return formatDate(new Date(year, month - 1, day));
+    }
+
+    function dateFromHours(date, hours) {
+      return new Date(date.getTime() + hours * 60 * 60 * 1000);
+    }
+
+    function setDateTime(date, dateField, timeField) {
+      dateField.textContent = formatDate(date);
+      timeField.textContent = formatTime(date);
+    }
+
+    function selectedProduct() {
+      const query = normalize(productInput.value);
+      if (!query) return null;
+      return PRODUCTS.find((product) => normalize(product.name) === query) || null;
+    }
+
+    function renderPreparation() {
+      const product = selectedProduct();
+      const enteredName = productInput.value.trim();
+      const madeAt = new Date(madeAtInput.value);
+
+      labelFields.product.textContent = product ? product.name : "";
+      labelFields.madeBy.textContent = madeByInput.value.trim();
+
+      if (!product) {
+        productInfo.textContent = enteredName
+          ? searchMatches.length
+            ? `Encontramos ${searchMatches.length} resultado${searchMatches.length === 1 ? "" : "s"}. Elige el producto correcto para continuar.`
+            : "No encontramos coincidencias; prueba con otra palabra o revisa la escritura."
+          : "Escribe una palabra, aunque no recuerdes el nombre completo, y elige un resultado.";
+        statusElement.dataset.kind = enteredName && !searchMatches.length ? "error" : "info";
+        statusElement.textContent = enteredName
+          ? searchMatches.length
+            ? "Selecciona un producto de los resultados para calcular sus fechas."
+            : "No hay un producto seleccionado; no se calcularon fechas."
+          : "Selecciona un producto registrado.";
+        for (const field of [labelFields.madeDate, labelFields.madeTime, labelFields.readyDate, labelFields.readyTime, labelFields.discardDate, labelFields.discardTime]) {
+          field.textContent = "";
+        }
+        return;
+      }
+
+      if (!madeAtInput.value || Number.isNaN(madeAt.getTime())) {
+        for (const field of [labelFields.madeDate, labelFields.madeTime, labelFields.readyDate, labelFields.readyTime, labelFields.discardDate, labelFields.discardTime]) {
+          field.textContent = "";
+        }
+        statusElement.dataset.kind = "error";
+        statusElement.textContent = "Ingresa una fecha y hora de elaboración válidas.";
+        return;
+      }
+
+      const readyAt = dateFromHours(madeAt, product.readyHours);
+      setDateTime(madeAt, labelFields.madeDate, labelFields.madeTime);
+      setDateTime(readyAt, labelFields.readyDate, labelFields.readyTime);
+      labelFields.discardDate.textContent = "";
+      labelFields.discardTime.textContent = "";
+
+      const readyDescription = product.readyHours === 0
+        ? "LISTO se calcula a la misma hora de HECHO."
+        : `LISTO se calcula ${product.readyHours} h después de HECHO (descongelado/preparación).`;
+      if (product.useHours === null) {
+        productInfo.textContent = `${readyDescription} La foto no permite confirmar el tiempo de "En uso".`;
+        statusElement.dataset.kind = "error";
+        statusElement.textContent = "Falta confirmar el tiempo de descarte de este producto en la tabla oficial; no se inventó una fecha.";
+      } else {
+        const discardAt = dateFromHours(readyAt, product.useHours);
+        setDateTime(discardAt, labelFields.discardDate, labelFields.discardTime);
+        productInfo.textContent = `${readyDescription} DESCARTE se calcula ${product.useHours} h después de LISTO.`;
+        statusElement.dataset.kind = "info";
+        statusElement.textContent = "Fechas calculadas. Verifica que el producto y las condiciones de conservación correspondan.";
+      }
+    }
+
+    function renderIncoming() {
+      const product = incomingInputs.product.value.trim();
+      const receivedAt = new Date(incomingInputs.receivedAt.value);
+
+      incomingLabelFields.product.textContent = product;
+      incomingLabelFields.supplier.textContent = incomingInputs.supplier.value.trim();
+      incomingLabelFields.expiry.textContent = formatDateInput(incomingInputs.expiryDate.value);
+      incomingLabelFields.quantity.textContent = incomingInputs.quantity.value.trim();
+      incomingLabelFields.receivedBy.textContent = incomingInputs.receivedBy.value.trim();
+      incomingLabelFields.receivedAt.textContent = "";
+
+      if (!product || !incomingInputs.receivedAt.value || Number.isNaN(receivedAt.getTime())) {
+        statusElement.dataset.kind = "error";
+        statusElement.textContent = !product
+          ? "Escribe el nombre del producto para preparar la etiqueta de ingreso."
+          : "Ingresa una fecha y hora de ingreso válidas.";
+        return;
+      }
+
+      incomingLabelFields.receivedAt.textContent = `${formatDate(receivedAt)} · ${formatTime(receivedAt)}`;
+      statusElement.dataset.kind = "info";
+      statusElement.textContent = "Etiqueta de ingreso lista para imprimir. Confirma la caducidad y la cantidad recibida.";
+    }
+
+    function render() {
+      if (labelMode === "incoming") {
+        renderIncoming();
+        return;
+      }
+      renderPreparation();
+    }
+
+    function setLabelMode(mode) {
+      labelMode = mode;
+      const isIncoming = mode === "incoming";
+      document.getElementById("prep-mode").setAttribute("aria-pressed", String(!isIncoming));
+      document.getElementById("incoming-mode").setAttribute("aria-pressed", String(isIncoming));
+      document.getElementById("prep-fields").hidden = isIncoming;
+      document.getElementById("prep-time-field").hidden = isIncoming;
+      document.getElementById("prep-by-field").hidden = isIncoming;
+      document.getElementById("incoming-fields").hidden = !isIncoming;
+      document.getElementById("label").hidden = isIncoming;
+      document.getElementById("label").classList.toggle("is-printing", !isIncoming);
+      document.getElementById("incoming-label").hidden = !isIncoming;
+      document.getElementById("incoming-label").classList.toggle("is-printing", isIncoming);
+      document.getElementById("form-title").textContent = isIncoming ? "Datos de ingreso" : "Datos de preparación";
+      document.getElementById("form-hint").textContent = isIncoming
+        ? "Registra la llegada del producto a la tienda y revisa la etiqueta antes de imprimir."
+        : "Selecciona el producto y revisa la fecha y hora de elaboración antes de imprimir.";
+      document.getElementById("preview-title").textContent = isIncoming ? "Vista previa · Ingreso a tienda" : "Vista previa · Preparación";
+      document.getElementById("preview-mode-hint").textContent = isIncoming ? "Etiqueta de recepción" : "Solo se imprime la etiqueta";
+      document.getElementById("preview-disclaimer").textContent = isIncoming
+        ? "La fecha de caducidad se copia del envase; verifica que coincida con el producto recibido."
+        : "Los tiempos se transcribieron de forma inicial desde las fotos compartidas. Confirma los datos y las condiciones de almacenamiento con la tabla oficial vigente antes de usar la etiqueta.";
+      document.getElementById("print-button-label").textContent = isIncoming ? "Imprimir ingreso" : "Imprimir etiqueta";
+      if (isIncoming) hideSearchResults();
+      render();
+    }
+
+    function setAppView(view) {
+      const isLabels = view === "labels";
+      const isHistory = view === "history";
+      const isAdmin = view === "admin";
+
+      if (isAdmin && activeProfile?.role !== "admin") {
+        setMessage(inviteStatus, "No tienes permisos para crear usuarios.", "error");
+        return;
+      }
+
+      document.getElementById("labels-view-button").setAttribute("aria-pressed", String(isLabels));
+      document.getElementById("history-view-button").setAttribute("aria-pressed", String(isHistory));
+      document.getElementById("admin-view-button").setAttribute("aria-pressed", String(isAdmin));
+      document.getElementById("labels-view-panel").hidden = !isLabels;
+      document.getElementById("history-panel").hidden = !isHistory;
+      document.getElementById("admin-panel").hidden = !isAdmin;
+
+      if (isHistory) void loadHistory();
+    }
+
+    function resetPreparation() {
+      productInput.value = "";
+      madeByInput.value = "";
+      madeAtInput.value = localDateTimeValue(new Date());
+      hideSearchResults();
+      render();
+      productInput.focus();
+    }
+
+    productInput.addEventListener("input", () => {
+      if (labelMode !== "prep") return;
+      activeSuggestionIndex = -1;
+      renderSearchResults();
+      render();
+    });
+    productInput.addEventListener("focus", () => {
+      if (labelMode === "prep") renderSearchResults();
+    });
+    productInput.addEventListener("keydown", (event) => {
+      if (labelMode !== "prep") return;
+      if (event.key === "ArrowDown" && !resultsElement.hidden) {
+        event.preventDefault();
+        if (searchMatches.length) activeSuggestionIndex = (activeSuggestionIndex + 1) % searchMatches.length;
+        updateActiveSuggestion();
+      } else if (event.key === "ArrowUp" && !resultsElement.hidden && searchMatches.length) {
+        event.preventDefault();
+        activeSuggestionIndex = activeSuggestionIndex <= 0 ? searchMatches.length - 1 : activeSuggestionIndex - 1;
+        updateActiveSuggestion();
+      } else if (event.key === "Enter" && !resultsElement.hidden && searchMatches.length) {
+        event.preventDefault();
+        selectProduct(searchMatches[activeSuggestionIndex < 0 ? 0 : activeSuggestionIndex]);
+      } else if (event.key === "Escape") {
+        hideSearchResults();
+      }
+    });
+    document.addEventListener("pointerdown", (event) => {
+      if (event.target instanceof Element && !event.target.closest(".search-box")) hideSearchResults();
+    });
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+      const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      applyTheme(nextTheme, true);
+    });
+    document.getElementById("login-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!supabase) {
+        setMessage(authStatus, "El acceso no está configurado. Solicita a la persona administradora que complete config.js.", "error");
+        return;
+      }
+      loginButton.disabled = true;
+      setMessage(authStatus, "Validando acceso…");
+      try {
+        const username = document.getElementById("login-username").value.trim().toLowerCase();
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: `${username}@accounts.peps.invalid`,
+          password: document.getElementById("login-password").value
+        });
+        if (error) throw error;
+        setMessage(authStatus, "Acceso correcto. Cargando perfil…");
+        await syncSession(data.session);
+      } catch (error) {
+        setMessage(authStatus, `No se pudo iniciar sesión: ${error.message}`, "error");
+      } finally {
+        loginButton.disabled = false;
+      }
+    });
+    document.getElementById("sign-out-button").addEventListener("click", signOut);
+    document.getElementById("auth-sign-out-button").addEventListener("click", signOut);
+    document.getElementById("profile-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const displayName = profileNameInput.value.trim();
+      if (!supabase || !activeUser || !displayName) {
+        setMessage(profileStatus, "Escribe un nombre visible para guardar el perfil.", "error");
+        return;
+      }
+
+      const saveButton = event.currentTarget.querySelector('button[type="submit"]');
+      saveButton.disabled = true;
+      setMessage(profileStatus, "Guardando nombre…");
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .update({ display_name: displayName })
+          .eq("id", activeUser.id)
+          .select("id, display_name, role")
+          .single();
+        if (error) throw error;
+        activeProfile = data;
+        document.getElementById("account-name").textContent = data.display_name;
+        setMessage(profileStatus, "Nombre de perfil actualizado.");
+      } catch (error) {
+        setMessage(profileStatus, `No se pudo actualizar el perfil: ${error.message}`, "error");
+      } finally {
+        saveButton.disabled = false;
+      }
+    });
+    document.getElementById("invite-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!supabase || !activeUser || activeProfile?.role !== "admin") {
+        setMessage(inviteStatus, "Solo una cuenta administradora puede crear usuarios.", "error");
+        return;
+      }
+
+      const displayName = document.getElementById("invite-name").value.trim();
+      const username = document.getElementById("invite-username").value.trim().toLowerCase();
+      const password = document.getElementById("invite-password").value;
+      if (!displayName || !username || !password) {
+        setMessage(inviteStatus, "Completa el nombre, usuario y contraseña inicial.", "error");
+        return;
+      }
+
+      inviteButton.disabled = true;
+      setMessage(inviteStatus, "Creando cuenta segura…");
+      try {
+        const { data, error } = await supabase.functions.invoke("create-user", {
+          body: { displayName, username, password }
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        document.getElementById("invite-form").reset();
+        setMessage(inviteStatus, data?.message || "La cuenta fue creada.");
+      } catch (error) {
+        setMessage(inviteStatus, `No se pudo crear la cuenta: ${error.message}`, "error");
+        console.error("No se pudo crear la cuenta de usuario.", error);
+      } finally {
+        inviteButton.disabled = false;
+      }
+    });
+    document.getElementById("labels-view-button").addEventListener("click", () => setAppView("labels"));
+    document.getElementById("history-view-button").addEventListener("click", () => setAppView("history"));
+    document.getElementById("admin-view-button").addEventListener("click", () => setAppView("admin"));
+    document.getElementById("refresh-history-button").addEventListener("click", loadHistory);
+    document.getElementById("prep-mode").addEventListener("click", () => setLabelMode("prep"));
+    document.getElementById("incoming-mode").addEventListener("click", () => setLabelMode("incoming"));
+    madeAtInput.addEventListener("input", renderPreparation);
+    madeByInput.addEventListener("input", renderPreparation);
+    for (const input of Object.values(incomingInputs)) input.addEventListener("input", renderIncoming);
+    document.getElementById("print-button").addEventListener("click", async () => {
+      const printButton = document.getElementById("print-button");
+      let eventType;
+      let product;
+      let fields;
+
+      if (labelMode === "incoming") {
+        const receivedAt = new Date(incomingInputs.receivedAt.value);
+        product = incomingInputs.product.value.trim();
+        if (!product || !incomingInputs.receivedAt.value || Number.isNaN(receivedAt.getTime())) {
+          renderIncoming();
+          (incomingInputs.product.value.trim() ? incomingInputs.receivedAt : incomingInputs.product).focus();
+          return;
+        }
+        eventType = "store_entry";
+        fields = {
+          received_at: receivedAt.toISOString(),
+          supplier: incomingInputs.supplier.value.trim(),
+          expiry_date: incomingInputs.expiryDate.value || null,
+          quantity: incomingInputs.quantity.value.trim(),
+          received_by: incomingInputs.receivedBy.value.trim()
+        };
+      } else {
+        const selected = selectedProduct();
+        const madeAt = new Date(madeAtInput.value);
+        if (!selected) {
+          renderPreparation();
+          productInput.focus();
+          return;
+        }
+        if (!madeAtInput.value || Number.isNaN(madeAt.getTime())) {
+          renderPreparation();
+          madeAtInput.focus();
+          return;
+        }
+        if (selected.useHours === null) {
+          renderPreparation();
+          return;
+        }
+
+        const readyAt = dateFromHours(madeAt, selected.readyHours);
+        const discardAt = dateFromHours(readyAt, selected.useHours);
+        product = selected.name;
+        eventType = "preparation";
+        fields = {
+          made_at: madeAt.toISOString(),
+          ready_at: readyAt.toISOString(),
+          discard_at: discardAt.toISOString(),
+          made_by: madeByInput.value.trim()
+        };
+      }
+
+      printButton.disabled = true;
+      setMessage(statusElement, "Guardando la solicitud en el historial…");
+      try {
+        await recordLabelEvent(eventType, product, fields);
+        setMessage(statusElement, "Registro guardado en el historial. Abriendo impresión…");
+        window.print();
+      } catch (error) {
+        setMessage(statusElement, `No se guardó la etiqueta y no se abrirá la impresión: ${error.message}`, "error");
+        console.error("No se pudo guardar la solicitud de impresión.", error);
+      } finally {
+        printButton.disabled = false;
+      }
+    });
+    document.getElementById("reset-button").addEventListener("click", () => {
+      if (labelMode === "incoming") {
+        incomingInputs.product.value = "";
+        incomingInputs.receivedAt.value = localDateTimeValue(new Date());
+        incomingInputs.supplier.value = "";
+        incomingInputs.expiryDate.value = "";
+        incomingInputs.quantity.value = "";
+        incomingInputs.receivedBy.value = "";
+        renderIncoming();
+        incomingInputs.product.focus();
+      } else {
+        resetPreparation();
+      }
+    });
+
+    applyTheme(loadTheme());
+    madeAtInput.value = localDateTimeValue(new Date());
+    incomingInputs.receivedAt.value = localDateTimeValue(new Date());
+    setLabelMode("prep");
+    if (!supabase) {
+      loginButton.disabled = true;
+      const configMissing = !supabaseConfig.url || !supabaseConfig.anonKey;
+      setMessage(
+        authStatus,
+        configMissing
+          ? "El acceso compartido aún no está configurado. La persona administradora debe completar la URL y la clave pública de Supabase en config.js."
+          : "No se pudo cargar el cliente de Supabase. Comprueba tu conexión a internet e inténtalo de nuevo.",
+        "error"
+      );
+    } else {
+      supabase.auth.onAuthStateChange((_event, session) => {
+        window.setTimeout(() => {
+          syncSession(session).catch((error) => {
+            setMessage(authStatus, `No se pudo verificar la sesión: ${error.message}`, "error");
+          });
+        }, 0);
+      });
+      supabase.auth.getSession().then(({ data, error }) => {
+        if (error) {
+          setMessage(authStatus, `No se pudo recuperar la sesión: ${error.message}`, "error");
+          return;
+        }
+        return syncSession(data.session);
+      }).catch((error) => {
+        setMessage(authStatus, `No se pudo conectar con Supabase: ${error.message}`, "error");
+      });
+    }
+  </script>
+</body>
+</html>
